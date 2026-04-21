@@ -1,0 +1,17 @@
+{
+  "paths": {
+    "chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "discord": "C:\\Users\\Sebastian\\AppData\\Local\\Discord\\Update.exe",
+    "steam": "",
+    "ea_desktop": "C:\\Program Files\\Electronic Arts\\EA Desktop\\13.676.0.6189-1775001998\\Destager\\EADestager.exe",
+    "python": "C:\\Users\\Sebastian\\AppData\\Local\\Python\\pythoncore-3.11-64\\python.exe"
+  },
+  "ollama": {
+    "modelo": "mistral",
+    "url": "http://localhost:11434/api/chat",
+    "activo": true
+  },
+  "vosk": {
+    "modelo_ruta": "modelos/vosk-es"
+  }
+}

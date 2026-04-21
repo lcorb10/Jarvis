@@ -1,99 +1,51 @@
 # modulos/ia_local.py
 import requests
-import json
-import os
 from datetime import datetime
+from modulos.logger import log
+from modulos.memoria import Memoria
 
 class IALocal:
-    def __init__(self, modelo="mistral"):
+    def __init__(self, modelo="mistral", memoria=None):
         self.modelo = modelo
         self.url = "http://localhost:11434/api/chat"
         self.historial = []
-        self.archivo_memoria = "memoria_jarvis.json"
-        self.memoria = self._cargar_memoria()
-        self.sistema = self._construir_sistema()
+        self.memoria = memoria or Memoria()
 
     def _construir_sistema(self):
         hora = datetime.now().strftime("%H:%M")
         fecha = datetime.now().strftime("%A %d de %B de %Y")
-        
-        memoria_texto = ""
-        if self.memoria.get("preferencias"):
-            memoria_texto = f"Lo que sé del usuario: {', '.join(self.memoria['preferencias'])}."
+        preferencias = self.memoria.obtener_preferencias_texto()
+        contexto = self.memoria.datos.get("contexto", {})
+        contexto_texto = ""
+        if contexto:
+            ultima_app = contexto.get("ultima_app")
+            ultima_accion = contexto.get("ultima_accion")
+            if ultima_app:
+                contexto_texto = f"Última app abierta: {ultima_app}. "
+            if ultima_accion:
+                contexto_texto += f"Última acción: {ultima_accion}."
 
-        return f"""Eres Jarvis, un asistente personal de IA inteligente y eficiente.
-
-REGLAS ESTRICTAS:
-- SIEMPRE respondes en español, sin excepciones
+        return f"""Eres Jarvis, un asistente personal de IA inteligente.
+REGLAS:
+- SIEMPRE responde en español
 - Respuestas CORTAS: máximo 2 oraciones para voz
-- Si te piden abrir una app o buscar algo, confirma brevemente
-- Eres directo, útil y con personalidad tipo Jarvis de Iron Man
-- La hora actual es {hora} y la fecha es {fecha}
-- {memoria_texto}
-
-CAPACIDADES:
-- Puedes abrir aplicaciones cuando el usuario lo pide
-- Puedes buscar en Google cuando el usuario dice "busca", "buscar", "googlea"
-- Recuerdas el contexto de la conversación
-- Respondes preguntas generales con precisión"""
-
-    def _cargar_memoria(self):
-        if os.path.exists(self.archivo_memoria):
-            try:
-                with open(self.archivo_memoria, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except:
-                pass
-        return {"preferencias": [], "conversaciones": 0}
-
-    def _guardar_memoria(self):
-        try:
-            with open(self.archivo_memoria, "w", encoding="utf-8") as f:
-                json.dump(self.memoria, f, ensure_ascii=False, indent=2)
-        except:
-            pass
-
-    def _detectar_busqueda(self, texto):
-        """Detecta si el usuario quiere buscar algo en Google"""
-        texto_lower = texto.lower()
-        palabras_busqueda = [
-            "busca", "buscar", "googlea", "google", "busca en google",
-            "busca en internet", "busca en la web", "busca información",
-            "qué es", "que es", "quién es", "quien es", "cómo se hace",
-            "como se hace", "dónde está", "donde esta", "busca sobre"
-        ]
-        for palabra in palabras_busqueda:
-            if palabra in texto_lower:
-                # Extraer el término de búsqueda
-                termino = texto_lower
-                for p in palabras_busqueda:
-                    termino = termino.replace(p, "").strip()
-                return termino if termino else texto
-        return None
+- Eres directo y con personalidad tipo Jarvis de Iron Man
+- Hora actual: {hora}, Fecha: {fecha}
+{preferencias}
+{contexto_texto}"""
 
     def consultar(self, mensaje):
-        # Actualizar sistema con hora actual
-        self.sistema = self._construir_sistema()
-        
-        # Detectar si es una búsqueda
-        termino_busqueda = self._detectar_busqueda(mensaje)
-        if termino_busqueda:
-            return f"BUSCAR_GOOGLE:{termino_busqueda}"
-
+        self.memoria.incrementar_conversaciones()
         self.historial.append({"role": "user", "content": mensaje})
-        self.memoria["conversaciones"] = self.memoria.get("conversaciones", 0) + 1
 
         payload = {
             "model": self.modelo,
             "messages": [
-                {"role": "system", "content": self.sistema},
+                {"role": "system", "content": self._construir_sistema()},
                 *self.historial[-12:]
             ],
             "stream": False,
-            "options": {
-                "temperature": 0.7,
-                "top_p": 0.9,
-            }
+            "options": {"temperature": 0.7, "top_p": 0.9}
         }
 
         try:
@@ -101,19 +53,15 @@ CAPACIDADES:
             resp.raise_for_status()
             respuesta = resp.json()["message"]["content"].strip()
             self.historial.append({"role": "assistant", "content": respuesta})
-            self._guardar_memoria()
+            log.info(f"IA respondió: {respuesta[:60]}...")
             return respuesta
         except requests.exceptions.ConnectionError:
-            return "Ollama no está activo. Ejecuta ollama serve."
+            log.error("Ollama no disponible")
+            return "Ollama no está activo."
         except Exception as e:
-            return f"Error: {str(e)}"
-
-    def aprender(self, dato):
-        """Guardar preferencia del usuario"""
-        if dato not in self.memoria["preferencias"]:
-            self.memoria["preferencias"].append(dato)
-            self._guardar_memoria()
+            log.error(f"Error IA: {e}")
+            return f"Error consultando la IA."
 
     def limpiar_historial(self):
         self.historial = []
-        print("🗑️ Historial limpiado.")
+        log.info("Historial limpiado")
