@@ -1,0 +1,17 @@
+{
+  "paths": {
+    "chrome": "",
+    "discord": "",
+    "steam": "",
+    "ea_desktop": "",
+    "python": ""
+  },
+  "ollama": {
+    "modelo": "mistral",
+    "url": "http://localhost:11434/api/chat",
+    "activo": false
+  },
+  "vosk": {
+    "modelo_ruta": "modelos/vosk-es"
+  }
+}

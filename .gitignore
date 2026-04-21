@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Config
+config.json (después de la primera ejecución)
+
+# Modelos grandes
+modelos/vosk-es/
+modelos/*/
+
+# Memoria
+memoria_jarvis.json
+
+# Logs
+*.log
