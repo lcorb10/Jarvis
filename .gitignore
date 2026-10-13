@@ -1,18 +1,13 @@
-# Python
+.env
 __pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-
-# Config
-config.json (después de la primera ejecución)
-
-# Modelos grandes
-modelos/vosk-es/
-modelos/*/
-
-# Memoria
-memoria_jarvis.json
-
-# Logs
+*.pyc
+build/
+dist/
+logs/
+backups/
+modelos/
 *.log
+memoria_jarvis.json
+aprendizaje_estado.json
+.vscode/
+*.pdf

@@ -1,74 +1,55 @@
-# Jarvis — Asistente de IA por Voz
+# J.A.R.V.I.S MK2
 
-Asistente personal tipo Jarvis completamente gratuito, local y sin dependencias de internet.
+Asistente personal de IA por voz para Windows. Se activa con dos aplausos, entiende comandos en español y puede controlar el computador, buscar en la web, analizar la pantalla y ejecutar tareas de varios pasos.
 
-## Instalación rápida
+## Características
 
-### 1. Descargar el repositorio
-```bash
-git clone https://github.com/tuusuario/jarvis.git
-cd jarvis
+- **Voz offline:** reconocimiento de voz con Vosk (modelo en español), sin enviar audio a internet.
+- **IA híbrida:** chat con un LLM local vía Ollama y Google Gemini como respaldo opcional.
+- **Agente multi-paso:** un planificador divide las tareas en pasos y un ejecutor las corre con manejo de errores.
+- **Gestor de cuotas de Gemini:** verifica la API key al inicio, limita a 30 llamadas/min y bloquea por categoría tras errores repetidos, con fallback automático.
+- **Síntesis de voz:** Gemini TTS → Edge TTS → pyttsx3, en cascada.
+- **Visión:** captura de pantalla o cámara para describir lo que se ve.
+- **Control del sistema:** abrir y cerrar aplicaciones (detectadas automáticamente), volumen, archivos, búsquedas en Google y YouTube.
+- **Memoria y aprendizaje:** recuerda preferencias y conversaciones recientes.
+- **Interfaz gráfica** en PySide6 con panel de configuración, e instalador para Windows (PyInstaller + Inno Setup).
+
+## Tecnologías
+
+Python 3.11 · Vosk · Ollama · Google Gemini API · Edge TTS · PySide6 · Playwright · PyAutoGUI
+
+## Estructura
+
+```
+main.py              punto de entrada
+jarvis_core.py       ciclo principal: escucha → intención → acción → respuesta
+interfaz.py          interfaz gráfica (PySide6)
+modulos/
+  agent/             planificador, ejecutor y cola de tareas
+  apis/              clima, noticias, traductor, Spotify, YouTube
+  tools/             control del PC, archivos, búsqueda web, pantalla
+  gemini_manager.py  control de cuotas de Gemini
+  ia_local.py        cliente de Ollama
+  reconocimiento_voz.py / sintesis_voz.py
+test_jarvis.py       pruebas
 ```
 
-### 2. Instalar dependencias
-```bash
-py -3.11 -m pip install -r requirements.txt
-```
+## Instalación
 
-### 3. Descargar modelo de voz Vosk
-- Ve a https://alphacephei.com/vosk/models
-- Descarga `vosk-model-es-0.42` (1.8GB)
-- Descomprímelo y renómbralo a `vosk-es`
-- Pégalo en `jarvis/modelos/vosk-es/`
+1. Instala [Python 3.11+](https://www.python.org/) y [Ollama](https://ollama.com/) (`ollama pull mistral`).
+2. Descarga el modelo de Vosk en español y ponlo en `modelos/vosk-es`.
+3. Instala las dependencias:
+   ```
+   pip install -r requirements.txt
+   ```
+4. (Opcional) Crea un archivo `.env` con `GEMINI_API_KEY=tu_clave` para usar Gemini.
+5. Ejecuta:
+   ```
+   python main.py
+   ```
 
-### 4. Instalar y arrancar Ollama
-```bash
-# Descargar e instalar desde https://ollama.com
-# Luego en una terminal:
-ollama serve
-
-# En otra terminal:
-ollama pull mistral
-```
-
-### 5. Ejecutar Jarvis
-```bash
-py -3.11 jarvis_core.py
-```
-
-**Nota:** La primera ejecución detectará automáticamente todas tus aplicaciones y guardará las rutas en `config.json`.
-
-## Uso
-
-1. **Aplaudí dos veces** para activar
-2. **Habla tu comando** (ej: "abre spotify", "busca memes en youtube")
-3. **Di "descansa"** para desactivar
-
-## Requisitos
-- Python 3.11+
-- Windows 10/11
-- 16GB RAM (recomendado)
-- ~5GB disco (para Ollama + Vosk)
-
-## Comandos soportados
-
-### Apps
-- "abre chrome/discord/spotify/steam/etc"
-- "cierra spotify"
-
-### Búsquedas
-- "busca recetas de pasta" → Google
-- "busca canción de beele en youtube" → YouTube
-- "pon la plena en youtube"
-
-### Sistema
-- "sube el volumen"
-- "baja el volumen"
-- "apaga el equipo"
-
-## Personalización
-
-Edita `config.json` para cambiar rutas o modelos de IA.
+Requisitos recomendados: Windows 10/11, 16 GB de RAM.
 
 ## Licencia
-MIT — Completamente gratuito y de código abierto.
+
+MIT

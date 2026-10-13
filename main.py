@@ -1,61 +1,80 @@
-# main.py
-import threading
+# main.py — Jarvis MK2
 import sys
-from interfaz import InterfazJarvis
-from jarvis_core import Jarvis
-from modulos.logger import log
+import threading
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+
+def _ya_corriendo_y_traer_al_frente() -> bool:
+    """Si ya hay un Jarvis corriendo (bridge en :18790), le pide mostrar la GUI
+    y devuelve True para que este lanzamiento se aborte."""
+    try:
+        import urllib.request, json
+        with urllib.request.urlopen("http://127.0.0.1:18790/health", timeout=1.5) as r:
+            data = json.loads(r.read())
+            if data.get("status") == "ok":
+                # Ya hay una instancia: pedirle que muestre la ventana
+                req = urllib.request.Request(
+                    "http://127.0.0.1:18790/show",
+                    method="POST",
+                    headers={"Content-Type": "application/json"},
+                    data=b"{}",
+                )
+                try:
+                    urllib.request.urlopen(req, timeout=2)
+                except Exception:
+                    pass
+                return True
+    except Exception:
+        pass
+    return False
+
 
 def main():
-    # Crear GUI
+    if _ya_corriendo_y_traer_al_frente():
+        print("Jarvis MK2 ya está corriendo. Restaurando ventana.")
+        sys.exit(0)
+
+    from PySide6.QtWidgets import QApplication
+    app = QApplication(sys.argv)
+    app.setApplicationName("Jarvis MK2")
+
+    # GUI primero
+    from interfaz import InterfazJarvis
     gui = InterfazJarvis()
 
-    # Crear Jarvis con callbacks hacia la GUI
-    jarvis = Jarvis()
+    # Jarvis con callbacks hacia la GUI
+    from jarvis_core import Jarvis
+    jarvis = Jarvis(gui_callbacks=gui.get_callbacks())
 
-    # Conectar callbacks de Jarvis → GUI
-    # Parchamos los métodos para que notifiquen a la GUI
-
-    tts_original = jarvis.tts.hablar
-    def hablar_con_gui(texto):
-        gui.on_jarvis_response(texto)
-        gui.on_state_change("hablando")
-        tts_original(texto)
-        gui.on_state_change("esperando")
-    jarvis.tts.hablar = hablar_con_gui
-
-    stt_original = jarvis.stt.escuchar_comando
-    def escuchar_con_gui(timeout=10):
-        gui.on_state_change("escuchando")
-        texto = stt_original(timeout=timeout)
-        if texto:
-            gui.on_user_speech(texto)
-        gui.on_state_change("procesando")
-        return texto
-    jarvis.stt.escuchar_comando = escuchar_con_gui
-
-    activar_original = jarvis.activar
-    def activar_con_gui():
-        gui.on_sistema("Jarvis activado por aplauso")
-        gui.on_state_change("escuchando")
-        activar_original()
-        gui.on_state_change("esperando")
-    jarvis.detector.callback = activar_con_gui
-
-    # Conectar Jarvis a GUI
+    # Conectar referencia bidireccional
     gui.conectar_jarvis(jarvis)
 
-    # Ejecutar Jarvis en hilo separado
+    # Bridge HTTP para Telegram (WSL2 → Windows)
+    try:
+        from bridge_server import start_bridge
+        start_bridge(jarvis)
+    except Exception as e:
+        from modulos.logger import log
+        log.warning(f"Bridge no inició: {e}")
+
+    # Jarvis en hilo de fondo
     def run_jarvis():
         try:
             jarvis.iniciar()
         except Exception as e:
+            from modulos.logger import log
             log.error(f"Error en Jarvis: {e}")
 
-    hilo_jarvis = threading.Thread(target=run_jarvis, daemon=True)
-    hilo_jarvis.start()
+    hilo = threading.Thread(target=run_jarvis, daemon=True)
+    hilo.start()
 
-    log.info("🖥️ Interfaz iniciada")
     gui.iniciar()
+
 
 if __name__ == "__main__":
     main()

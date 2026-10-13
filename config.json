@@ -1,9 +1,9 @@
 {
   "paths": {
     "chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "discord": "C:\\Users\\Sebastian\\AppData\\Local\\Discord\\Update.exe",
+    "discord": "",
     "steam": "",
-    "ea_desktop": "C:\\Program Files\\Electronic Arts\\EA Desktop\\13.676.0.6189-1775001998\\Destager\\EADestager.exe",
+    "ea_desktop": "",
     "python": "C:\\Users\\Sebastian\\AppData\\Local\\Python\\pythoncore-3.11-64\\python.exe"
   },
   "ollama": {
@@ -11,7 +11,36 @@
     "url": "http://localhost:11434/api/chat",
     "activo": true
   },
+  "gemini": {
+    "modelo_chat": "gemini-2.5-flash",
+    "modelo_planner": "gemini-2.5-flash",
+    "modelo_vision": "gemini-2.5-flash",
+    "modelo_tts": "gemini-2.5-flash-preview-tts",
+    "voz_tts": "Charon",
+    "activo": true
+  },
+  "orquestador": {
+    "default": "gemini",
+    "umbral_complejidad": 999,
+    "escalar_a_gemini_si": {
+      "usuario_pide_gemini": true
+    }
+  },
+  "voz": {
+    "voz_id": "gemini_aoede",
+    "vosk_modelo": "modelos/vosk-es",
+    "modo_silencioso": false
+  },
   "vosk": {
     "modelo_ruta": "modelos/vosk-es"
+  },
+  "gui": {
+    "tema": "dark",
+    "opacidad": 1.0,
+    "siempre_encima": true
+  },
+  "aprendizaje": {
+    "activo": true,
+    "intervalo_horas": 24
   }
 }
